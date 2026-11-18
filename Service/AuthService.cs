@@ -10,11 +10,14 @@ namespace CIt_Demo_Project.Service
     {
         private readonly IUserRepository userrepo;
         private readonly IPasswordHasher<User> pwdhasher;
+        private readonly IJwtService jwtService;
 
-        public AuthService(IUserRepository usersrepo,IPasswordHasher<User> pwdhsh)
+
+        public AuthService(IUserRepository usersrepo,IPasswordHasher<User> pwdhsh, IJwtService jwt)
         {
             userrepo = usersrepo;
             pwdhasher = pwdhsh;
+            jwtService = jwt;
         }
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
@@ -37,16 +40,23 @@ namespace CIt_Demo_Project.Service
                     message = "Invalid username or Password"
                 };
             }
+            var token = jwtService.GenerateToken(
+                result.id,
+                result.username,
+                result.email
+            );
 
             return new AuthResponseDto
             {
                 success = true,
-                message = "Welcome Back",
+                message = "Welcome back",
                 user_id = result.id,
                 username = result.username,
-                email = result.email
+                email = result.email,
+                token = token
 
             };
+
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)

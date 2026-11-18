@@ -5,6 +5,11 @@ using CIt_Demo_Project.Repository;
 using CIt_Demo_Project.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using DotNetEnv;
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +27,33 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionstring, ServerVersion.AutoDetect(connectionstring));
 });
 
-// Add services to the container.
+//JWT Configuration
+
+var jwtkey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtkey))
+{
+    throw new InvalidOperationException("Jwt Key is missing from environment Variable");
+}
+
+builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
+{
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtkey)),
+        ClockSkew = TimeSpan.Zero
+
+    };
+
+});
 
 
 
@@ -32,6 +63,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -48,7 +81,7 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
