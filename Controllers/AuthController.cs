@@ -1,5 +1,6 @@
 ﻿using CIt_Demo_Project.Data;
 using CIt_Demo_Project.DTO;
+using CIt_Demo_Project.Interface;
 using CIt_Demo_Project.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,43 +12,34 @@ namespace CIt_Demo_Project.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext dbContext;
-        private readonly PasswordHasher<User> pwdhsh;
+        private readonly IAuthService auth;
 
-        public AuthController(AppDbContext appDb)
+        public AuthController(IAuthService authService)
         {
-            dbContext = appDb;
-            pwdhsh = new PasswordHasher<User>();
+            auth = authService;
             
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Registration(RegisterDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var result = await auth.RegisterAsync(dto);
+            if (!result.success)
+                return Conflict(result);
 
-            bool usernameexist = await dbContext.users.AnyAsync(u => u.username == dto.username);
-            if (usernameexist)
-                return Conflict("Username already exits");
+            return Ok(result);
+        }
 
-            bool emailexists = await dbContext.users.AnyAsync(u => u.email == dto.email);
-            if (emailexists)
-                return Conflict("Email already Registered");
+        [HttpPost("login")]
 
-            var user = new User
-            {
-                username = dto.username,
-                fullname = dto.fullname,
-                email = dto.email
-            };
+        public async Task<IActionResult> Login(LoginDto dto)
+        {
+            var result = await auth.LoginAsync(dto);
+            if (!result.success)
+                return Conflict(result);
 
-            user.password = pwdhsh.HashPassword(user, dto.password);
-
-            dbContext.users.Add(user);
-            await dbContext.SaveChangesAsync();
-
-            return Ok(new { message = "Registration succesfuly completed", user_id = user.id });
+            return Ok(result);
+            
         }
 
     }

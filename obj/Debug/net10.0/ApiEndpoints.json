@@ -1,6 +1,22 @@
 [
   {
     "ContainingType": "CIt_Demo_Project.Controllers.AuthController",
+    "Method": "Login",
+    "RelativePath": "api/Auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "CIt_Demo_Project.DTO.LoginDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CIt_Demo_Project.Controllers.AuthController",
     "Method": "Registration",
     "RelativePath": "api/Auth/register",
     "HttpMethod": "POST",
